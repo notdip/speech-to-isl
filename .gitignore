@@ -1,0 +1,33 @@
+# Python
+islenv/
+finetune_env/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Datasets
+data/
+
+# Model outputs / generated content
+outputs/
+
+# Secrets
+.env
+*.env
+groq.env
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+
+# OS/editor clutter
+.DS_Store
+Thumbs.db
+.vscode/
+*.log
+
+# Report build artifacts
+*.aux
+*.log
+*.out
+report_assets/*.png

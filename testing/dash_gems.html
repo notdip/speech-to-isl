@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VaniSign - Speech to Sign Dashboard</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=IBM+Plex+Mono:wght@400;500;600&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-ink: #0E1116;
+      --panel-surface: #2A2F38;
+      --panel-border: rgba(139, 146, 160, 0.15);
+      --text-main: #F5F0E6;
+      --text-muted: #8B92A0;
+      --accent-saffron: #E8A33D;
+      --accent-teal: #4A9B8E;
+      
+      --font-display: 'Fraunces', serif;
+      --font-body: 'Work Sans', sans-serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-ink);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem 2rem;
+    }
+
+    /* Layout Components */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--panel-border);
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 2.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    h1 span {
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      color: var(--accent-saffron);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      vertical-align: super;
+      margin-left: 0.5rem;
+    }
+
+    .status-badge {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent-teal);
+      background: rgba(74, 155, 142, 0.1);
+      border: 1px solid rgba(74, 155, 142, 0.3);
+      padding: 0.35rem 0.75rem;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      background-color: var(--accent-teal);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-teal);
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.2fr;
+      gap: 1.5rem;
+      flex: 1;
+    }
+
+    .panel {
+      background-color: var(--panel-surface);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .panel-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+
+    .mono-tag {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent-teal);
+    }
+
+    /* Speech Input Section */
+    .mic-control {
+      background: var(--bg-ink);
+      border: 1px solid var(--panel-border);
+      border-radius: 4px;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .mic-button {
+      background: var(--accent-saffron);
+      color: var(--bg-ink);
+      border: none;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      transition: transform 0.1s ease;
+    }
+
+    .mic-button:hover {
+      transform: scale(1.05);
+    }
+
+    .waveform {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      height: 24px;
+    }
+
+    .wave-bar {
+      width: 3px;
+      background-color: var(--accent-teal);
+      border-radius: 2px;
+      animation: pulse 1.2s infinite ease-in-out;
+    }
+
+    .wave-bar:nth-child(2) { animation-delay: 0.2s; height: 60%; }
+    .wave-bar:nth-child(3) { animation-delay: 0.4s; height: 100%; }
+    .wave-bar:nth-child(4) { animation-delay: 0.1s; height: 40%; }
+    .wave-bar:nth-child(5) { animation-delay: 0.3s; height: 80%; }
+
+    @keyframes pulse {
+      0%, 100% { transform: scaleY(0.3); opacity: 0.5; }
+      50% { transform: scaleY(1); opacity: 1; }
+    }
+
+    .transcript-box {
+      background: var(--bg-ink);
+      border: 1px solid var(--panel-border);
+      border-radius: 4px;
+      padding: 1rem;
+      flex: 1;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: var(--text-main);
+    }
+
+    /* Gloss Processing Pipeline */
+    .gloss-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .gloss-card {
+      background: var(--bg-ink);
+      border-left: 3px solid var(--accent-teal);
+      padding: 0.75rem 1rem;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .gloss-card.active {
+      border-left-color: var(--accent-saffron);
+    }
+
+    .gloss-meta {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .gloss-token {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .gloss-token .prefix {
+      color: var(--accent-saffron);
+    }
+
+    /* Sign Video Player Output */
+    .video-container {
+      background: #000;
+      border: 1px solid var(--panel-border);
+      border-radius: 4px;
+      aspect-ratio: 16/9;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+
+    .video-placeholder {
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .active-sign-overlay {
+      position: absolute;
+      bottom: 0.75rem;
+      left: 0.75rem;
+      background: rgba(14, 17, 22, 0.85);
+      border: 1px solid var(--panel-border);
+      backdrop-filter: blur(4px);
+      padding: 0.35rem 0.75rem;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--accent-saffron);
+    }
+
+    .sequence-queue {
+      background: var(--bg-ink);
+      border: 1px solid var(--panel-border);
+      border-radius: 4px;
+      padding: 0.75rem;
+      flex: 1;
+    }
+
+    .queue-title {
+      font-size: 0.7rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .clip-chain {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .clip-node {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      background: var(--panel-surface);
+      border: 1px solid var(--panel-border);
+      padding: 0.35rem 0.6rem;
+      border-radius: 3px;
+      color: var(--text-main);
+    }
+
+    .clip-node.played {
+      opacity: 0.4;
+    }
+
+    .clip-node.current {
+      border-color: var(--accent-saffron);
+      color: var(--accent-saffron);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div>
+      <h1>VaniSign <span>ISL Studio</span></h1>
+    </div>
+    <div class="status-badge">
+      <span class="status-dot"></span>
+      PIPELINE: LIVE Concatenation
+    </div>
+  </header>
+
+  <main class="dashboard-grid">
+    
+    <section class="panel">
+      <div class="panel-header">
+        <span class="panel-title">01. Speech Input</span>
+        <span class="mono-tag">ASR_ENGINE_v2.1</span>
+      </div>
+      
+      <div class="mic-control">
+        <button class="mic-button" aria-label="Microphone active">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+          </svg>
+        </button>
+        <div class="waveform">
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+        </div>
+      </div>
+
+      <div class="transcript-box">
+        Where is the nearest train station? I need to travel to South Delhi.
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <span class="panel-title">02. Gloss Parser</span>
+        <span class="mono-tag">NLP_TRANSFORM</span>
+      </div>
+      
+      <div class="gloss-stream">
+        <div class="gloss-card played">
+          <div class="gloss-meta">
+            <span>TOKEN 01</span>
+            <span>CONF 98.4%</span>
+          </div>
+          <div class="gloss-token">TRAIN STATION</div>
+        </div>
+
+        <div class="gloss-card active">
+          <div class="gloss-meta">
+            <span>TOKEN 02</span>
+            <span>CONF 94.1%</span>
+          </div>
+          <div class="gloss-token"><span class="prefix">DESC-</span>LOCATION</div>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-meta">
+            <span>TOKEN 03</span>
+            <span>CONF 91.0%</span>
+          </div>
+          <div class="gloss-token"><span class="prefix">X-</span>WHERE</div>
+        </div>
+
+        <div class="gloss-card">
+          <div class="gloss-meta">
+            <span>TOKEN 04</span>
+            <span>CONF 96.8%</span>
+          </div>
+          <div class="gloss-token">SOUTH DELHI GO</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <span class="panel-title">03. Video Concatenator</span>
+        <span class="mono-tag">FRAME_STITCH_OK</span>
+      </div>
+
+      <div class="video-container">
+        <div class="video-placeholder">
+          [ Sign Video Stream Frame ]
+        </div>
+        <div class="active-sign-overlay">
+          CURRENT SIGN: DESC-LOCATION.mp4
+        </div>
+      </div>
+
+      <div class="sequence-queue">
+        <div class="queue-title">CONCATENATION QUEUE</div>
+        <div class="clip-chain">
+          <span class="clip-node played">TRAIN_STATION</span>
+          <span class="clip-node current">DESC-LOCATION</span>
+          <span class="clip-node">X-WHERE</span>
+          <span class="clip-node">SOUTH_DELHI</span>
+          <span class="clip-node">GO</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+</body>
+</html>
