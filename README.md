@@ -14,4 +14,4 @@ Audio/Text → Whisper (ASR) → LLM Gloss Translation (few-shot) → Gloss Clea
 See `report.tex` / project report for full dataset acquisition and environment setup steps.
 
 ## Team
-IrrationalBrains — Generative AI Course Project
+Dipesh & Associates — Generative AI Course Project
